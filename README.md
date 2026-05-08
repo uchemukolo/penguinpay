@@ -1,4 +1,4 @@
-# PenguinPay — Send Transactions Screen
+# PenguinPay - Send Transactions Screen
 
 A React TypeScript prototype of the Send Transactions screen for a remittance app, built for the Zepz front end engineer take-home project.
 
