@@ -1,18 +1,10 @@
-/**
- * validation.ts
- *
- * Pure validation helpers for the send money form.
- * All functions are side-effect free and return simple booleans or error maps,
- * making them straightforward to unit test.
- */
-
 import { getCountry } from '../config/countries'
 import type { CountryCode } from '../config/countries'
 import type { FormState, FormErrors } from '../types/form'
 
 /**
- * Validates that a phone number has the correct digit count for the given country.
- * Non-digit characters are stripped before checking, so formatted input is accepted.
+ * Validates the phone number based on the selected country's requirements.
+ * Strips non-digit characters and checks if the remaining digits match the expected count.
  */
 export const validatePhone = (phone: string, countryCode: CountryCode): boolean => {
   const country = getCountry(countryCode)
@@ -21,8 +13,7 @@ export const validatePhone = (phone: string, countryCode: CountryCode): boolean 
 }
 
 /**
- * Validates the send amount.
- * Must be a positive whole number — fractional cents are not supported.
+ * Validates the amount field to ensure it's a positive whole number.
  */
 export const validateAmount = (amount: string): boolean => {
   if (!amount) return false
@@ -31,9 +22,7 @@ export const validateAmount = (amount: string): boolean => {
 }
 
 /**
- * Runs all field validations against the current form state.
- * Returns an object containing an error message for each invalid field.
- * An empty object means the form is valid and ready to submit.
+ * Validates the entire form and returns an object containing error messages for any invalid fields.
  */
 export const validateForm = (form: FormState): FormErrors => {
   const errors: FormErrors = {}
@@ -53,7 +42,6 @@ export const validateForm = (form: FormState): FormErrors => {
   if (!form.phone.trim()) {
     errors.phone = 'Phone number is required'
   } else if (form.country && !validatePhone(form.phone, form.country as CountryCode)) {
-    // Show the expected format so the user knows exactly what to fix
     const country = getCountry(form.country as CountryCode)
     errors.phone = `Must be ${country.phoneDigits} digits after ${country.phonePrefix}`
   }

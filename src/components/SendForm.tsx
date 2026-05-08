@@ -1,16 +1,3 @@
-/**
- * SendForm.tsx
- *
- * The main (and only) screen of PenguinPay. Handles the full send-money flow:
- *   1. Recipient details (name, country, phone)
- *   2. Amount entry with live USD → local currency conversion
- *   3. Form validation with per-field error messages
- *   4. Submission with a loading state and a success screen
- *
- * Exchange rates are fetched once on mount and cached in the service layer.
- * The market rate and converted amount update reactively as the user types.
- */
-
 import { useState, useEffect, useCallback } from 'react'
 import { COUNTRIES, getCountry } from '../config/countries'
 import type { CountryCode } from '../config/countries'
@@ -19,7 +6,6 @@ import { validateForm } from '../utils/validation'
 import { fetchRates, convertUSDToLocal, formatLocalAmount } from '../services/exchangeRate'
 import type { ExchangeRates, RatesResult } from '../services/exchangeRate'
 
-/** Blank form used on mount and after a successful send */
 const INITIAL_FORM: FormState = {
   firstName: '',
   lastName: '',
@@ -31,15 +17,12 @@ const INITIAL_FORM: FormState = {
 export default function SendForm() {
   const [form, setForm] = useState<FormState>(INITIAL_FORM)
   const [, setErrors] = useState<FormErrors>({})
-  // Tracks which fields the user has interacted with so errors only show after a field is touched
   const [touched, setTouched] = useState<Set<string>>(new Set())
   const [rates, setRates] = useState<ExchangeRates | null>(null)
   const [ratesError, setRatesError] = useState(false)
   const [ratesMock, setRatesMock] = useState(false)
   const [ratesFetchedAt, setRatesFetchedAt] = useState<number | null>(null)
-  // Formatted converted amount shown below the amount field, e.g. '158,000.00 NGN'
   const [convertedAmount, setConvertedAmount] = useState<string | null>(null)
-  // Human-readable market rate string, e.g. '1 USD = 1,580.00 NGN'
   const [marketRate, setMarketRate] = useState<string | null>(null)
   const [status, setStatus] = useState<SendStatus>('idle')
 
@@ -73,10 +56,9 @@ export default function SendForm() {
     try {
       const country = getCountry(form.country as CountryCode)
       const rate = rates[country.currency]
+   
       if (rate) {
-        setMarketRate(
-          `1 USD = ${rate.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${country.currency}`
-        )
+        setMarketRate(`1 USD = ${formatLocalAmount(rate, country.currency)}`)
       } else {
         setMarketRate(null)
       }
@@ -137,10 +119,8 @@ export default function SendForm() {
   }
 
   /**
-   * Handles form submission.
-   * Touches all fields first so any remaining errors become visible,
-   * then bails out if validation fails.
-   * On success, simulates a network request with a 1.5 s delay.
+   * Handles the Send button click. Marks all fields as touched to reveal any hidden errors.
+   * If validation passes, simulates sending the transfer and shows the success screen.
    */
   const handleSubmit = async () => {
     setTouched(new Set(['firstName', 'lastName', 'country', 'phone', 'amount']))
@@ -155,7 +135,7 @@ export default function SendForm() {
     setStatus('success')
   }
 
-  /** Resets the entire form back to its initial state */
+  /** Resets the form to its initial state so the user can send another transfer */
   const handleReset = () => {
     setForm(INITIAL_FORM)
     setErrors({})
@@ -167,7 +147,7 @@ export default function SendForm() {
 
   const selectedCountry = form.country ? getCountry(form.country as CountryCode) : null
 
-  // ── Success screen ────────────────────────────────────────────────────────
+  // ── Success screen ───────────────────────────────────────────────────────
   if (status === 'success') {
     return (
       <div className="screen">
@@ -209,14 +189,11 @@ export default function SendForm() {
       <div className="form-card">
         <h1 className="form-title">Send Money</h1>
 
-        {/* Warn the user if live rates could not be loaded */}
         {ratesError && (
           <div className="alert alert-warning">
             Could not load live exchange rates. Displaying estimated rates.
           </div>
         )}
-
-        {/* Recipient Name */}
         <div className="field-row">
           <div className="field">
             <label htmlFor="firstName">First Name</label>
@@ -247,8 +224,6 @@ export default function SendForm() {
             {visibleErrors.lastName && <span className="error-msg">{visibleErrors.lastName}</span>}
           </div>
         </div>
-
-        {/* Country — drives phone prefix, digit count, and currency */}
         <div className="field">
           <label htmlFor="country">Recipient's Country</label>
           <select
@@ -267,8 +242,6 @@ export default function SendForm() {
           </select>
           {visibleErrors.country && <span className="error-msg">{visibleErrors.country}</span>}
         </div>
-
-        {/* Phone — disabled until a country is selected; prefix updates automatically */}
         <div className="field">
           <label htmlFor="phone">Phone Number</label>
           <div className="phone-input-wrapper">
@@ -298,8 +271,6 @@ export default function SendForm() {
           </div>
           {visibleErrors.phone && <span className="error-msg">{visibleErrors.phone}</span>}
         </div>
-
-        {/* Amount — whole USD numbers only */}
         <div className="field">
           <label htmlFor="amount">Amount to Send (USD)</label>
           <div className="amount-input-wrapper">
@@ -341,8 +312,6 @@ export default function SendForm() {
             </div>
           </div>
         )}
-
-        {/* Converted total — appears once a valid amount is entered */}
         {convertedAmount && (
           <div className="conversion-display">
             <span className="conversion-label">Recipient receives</span>
@@ -350,8 +319,6 @@ export default function SendForm() {
             <span className="conversion-note">based on current market rate</span>
           </div>
         )}
-
-        {/* Submit */}
         <button
           className={`btn btn-primary btn-full ${status === 'sending' ? 'btn-loading' : ''}`}
           onClick={handleSubmit}

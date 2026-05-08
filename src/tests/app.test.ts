@@ -140,7 +140,7 @@ describe('convertUSDToLocal', () => {
 
 describe('formatLocalAmount', () => {
   it('formats to 2 decimal places with currency code', () => {
-    expect(formatLocalAmount(12950.5555, 'KES')).toBe('12950.56 KES')
+    expect(formatLocalAmount(12950.5555, 'KES')).toBe('12,950.56 KES')
   })
 
   it('pads to 2 decimal places', () => {
