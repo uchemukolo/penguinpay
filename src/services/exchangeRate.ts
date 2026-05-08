@@ -19,9 +19,7 @@ export interface ExchangeRates {
 
 export interface RatesResult {
   rates: ExchangeRates
-  /** Unix timestamp (ms) of when the rates were fetched */
   fetchedAt: number
-  /** True when falling back to mock data (no API key configured) */
   isMock: boolean
 }
 
@@ -41,9 +39,14 @@ export const fetchRates = async (): Promise<RatesResult> => {
   }
 
   if (!API_KEY) {
-    // No API key — use hardcoded rates so the UI remains functional
+    // No API key, use hardcoded rates so the UI remains functional
     cache = {
-      rates: { KES: 129.5, NGN: 1580.0, TZS: 2680.0, UGX: 3730.0 },
+      rates: 
+      { KES: 129.5,
+        NGN: 1580.0,
+        TZS: 2680.0,
+        UGX: 3730.0
+      },
       fetchedAt: Date.now(),
       isMock: true,
     }
